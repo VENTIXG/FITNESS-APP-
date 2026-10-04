@@ -40,7 +40,12 @@ function ElapsedSince({ iso }: { iso: string }) {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
-  return <span className="tabular">{fmtClock((now - new Date(iso).getTime()) / 1000)}</span>;
+  // Server and client clocks differ by the render delay; the client value wins.
+  return (
+    <span className="tabular" suppressHydrationWarning>
+      {fmtClock((now - new Date(iso).getTime()) / 1000)}
+    </span>
+  );
 }
 
 function OfflineBanner() {

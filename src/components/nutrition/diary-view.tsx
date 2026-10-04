@@ -132,7 +132,7 @@ export function DiaryView({
         </Menu>
       } />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="lg:order-2 lg:sticky lg:top-6">
           <DaySummary totals={totals} target={target} />
         </div>

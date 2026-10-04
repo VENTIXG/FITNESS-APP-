@@ -20,6 +20,7 @@ import {
   workoutExercises,
   workouts,
 } from "@/server/db/schema";
+import { getExerciseContexts } from "@/server/queries/training";
 import { recomputeRecords } from "@/server/services/records";
 import { ActionError, createAction } from "./_lib";
 
@@ -576,3 +577,10 @@ export const createProgramFromTemplate = createAction(z.object({ template: z.enu
   if (!n) await db.update(programs).set({ isActive: true }).where(eq(programs.id, id));
   return { id };
 });
+
+/** History context for exercises added to a workout in the logger. */
+export const loadExerciseContexts = createAction(
+  z.object({ exerciseIds: z.array(uuid).min(1).max(50), workoutId: uuid.nullable() }),
+  async (input, ctx) => getExerciseContexts(ctx.userId, input.exerciseIds, input.workoutId),
+  { revalidate: false },
+);

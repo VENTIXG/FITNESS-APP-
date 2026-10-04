@@ -50,7 +50,7 @@ export default async function MeasurementsPage() {
   const lastFor = (s: MeasurementSite) => [...rows].reverse().find((r) => value(r, s) != null);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         <MeasurementChart rows={rows as unknown as Record<string, unknown>[]} />
         <Card>

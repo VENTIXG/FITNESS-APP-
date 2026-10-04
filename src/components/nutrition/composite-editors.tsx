@@ -257,7 +257,7 @@ export function MealEditor({ data, extraFoods, initial }: { data: PickerData; ex
   };
 
   return (
-    <form onSubmit={save} className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={save} className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-4">
         <Card className="space-y-4">
           <Field label={t.nutrition.mealName} htmlFor="meal-name">
@@ -373,7 +373,7 @@ export function RecipeEditor({ data, extraFoods, initial }: { data: PickerData; 
 
   const totalWeight = w && w > 0 ? w : rawWeight;
   return (
-    <form onSubmit={save} className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={save} className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-4">
         <Card className="space-y-4">
           <Field label={t.common.name} htmlFor="recipe-name">

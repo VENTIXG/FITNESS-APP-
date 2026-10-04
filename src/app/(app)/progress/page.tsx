@@ -52,7 +52,7 @@ export default async function WeightPage() {
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         <WeightChartCard entries={allWeights} goalKg={goal?.targetWeightKg} forecast={forecast?.points.slice(0, 9)} />
         <Card>
