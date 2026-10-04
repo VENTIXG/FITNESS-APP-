@@ -168,3 +168,36 @@ export function fmtTime(locale: Locale, instant: Date | string, timeZone: string
 export function fmtRelativeDays(locale: Locale, days: number) {
   return new Intl.RelativeTimeFormat(intlLocale(locale), { numeric: "auto" }).format(days, "day");
 }
+
+/** Formatter bound to a locale and unit system (server: getUserContext().fmt, client: useFmt()). */
+export function createFormatter(locale: Locale, units: UnitSystem) {
+  return {
+    locale,
+    units,
+    number: (v: number, decimals = 0, opts?: { min?: number; signed?: boolean }) => fmtNumber(locale, v, decimals, opts),
+    int: (v: number) => fmtInt(locale, v),
+    pct: (fraction: number, decimals = 0) => fmtPercent(locale, fraction, decimals),
+    weight: (kg: number, opts?: { decimals?: number; unit?: boolean; signed?: boolean }) => fmtWeight(locale, units, kg, opts),
+    load: (kg: number, unit = true) => fmtLoad(locale, units, kg, unit),
+    length: (cm: number, opts?: { decimals?: number; signed?: boolean }) => fmtLength(locale, units, cm, opts),
+    distance: (m: number, decimals = 2) => fmtDistance(locale, units, m, decimals),
+    volume: (ml: number) => fmtVolume(locale, units, ml),
+    kcal: (kcal: number, unit = true) => fmtKcal(locale, kcal, unit),
+    grams: (g: number, decimals = 0) => fmtGrams(locale, g, decimals),
+    date: (iso: ISODate, style: DateStyle = "medium") => fmtDate(locale, iso, style),
+    weekdayShort: (i: number) => fmtWeekdayShort(locale, i),
+    weekdayNarrow: (i: number) => fmtWeekdayNarrow(locale, i),
+    duration: fmtDurationShort,
+    clock: fmtClock,
+    sleep: fmtSleep,
+    pace: (secondsPerUnit: number | null) => fmtPace(secondsPerUnit, units),
+    time: (instant: Date | string, timeZone: string) => fmtTime(locale, instant, timeZone),
+    relativeDays: (days: number) => fmtRelativeDays(locale, days),
+    weightUnit: weightUnit(units),
+    lengthUnit: lengthUnit(units),
+    distanceUnit: distanceUnit(units),
+    volumeUnit: volumeUnit(units),
+  };
+}
+
+export type Formatter = ReturnType<typeof createFormatter>;
