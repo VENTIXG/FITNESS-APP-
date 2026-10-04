@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { cache } from "react";
-import { buildExerciseRecords } from "@/lib/calc/training";
+import { buildExerciseRecords, e1rm } from "@/lib/calc/training";
 import { weekday, type ISODate } from "@/lib/dates";
 import type { TrainingPrefs } from "@/lib/preferences";
 import { db } from "@/server/db";
@@ -413,4 +413,39 @@ export async function getProgramDetail(userId: string, id: string) {
     ? await db.select().from(programExercises).where(inArray(programExercises.programDayId, days.map((d) => d.id))).orderBy(asc(programExercises.sortOrder))
     : [];
   return { program, days: days.map((d) => ({ ...d, exercises: exs.filter((e) => e.programDayId === d.id) })) };
+}
+
+/** Best e1RM per session for the most frequently trained weighted exercises. */
+export async function getE1rmSeries(userId: string, start: ISODate, end: ISODate, top = 4) {
+  const rows = await db
+    .select({ exerciseId: exercises.id, name: exercises.name, nameEl: exercises.nameEl, category: exercises.category, equipment: exercises.equipment, date: workouts.date, weightKg: exerciseSets.weightKg, reps: exerciseSets.reps })
+    .from(exerciseSets)
+    .innerJoin(workoutExercises, eq(workoutExercises.id, exerciseSets.workoutExerciseId))
+    .innerJoin(workouts, eq(workouts.id, workoutExercises.workoutId))
+    .innerJoin(exercises, eq(exercises.id, workoutExercises.exerciseId))
+    .where(
+      and(
+        eq(workouts.userId, userId),
+        eq(workouts.status, "completed"),
+        eq(exerciseSets.completed, true),
+        sql`${exerciseSets.setType} <> 'warmup'`,
+        eq(exercises.trackingType, "weight_reps"),
+        gte(workouts.date, start),
+        lte(workouts.date, end),
+      ),
+    );
+  const byEx = new Map<string, { name: string; nameEl: string | null; weight: number; sessions: Map<string, number> }>();
+  for (const r of rows) {
+    if (!r.weightKg || !r.reps) continue;
+    const est = e1rm(r.weightKg, r.reps);
+    if (est == null) continue;
+    // "Main lifts": frequently trained, with compound and barbell movements preferred.
+    const e = byEx.get(r.exerciseId) ?? { name: r.name, nameEl: r.nameEl, weight: (r.category === "compound" ? 2 : 1) * (r.equipment === "barbell" ? 1.5 : 1), sessions: new Map() };
+    e.sessions.set(r.date, Math.max(e.sessions.get(r.date) ?? 0, est));
+    byEx.set(r.exerciseId, e);
+  }
+  return [...byEx.entries()]
+    .sort((a, b) => b[1].sessions.size * b[1].weight - a[1].sessions.size * a[1].weight)
+    .slice(0, top)
+    .map(([id, e]) => ({ exerciseId: id, name: e.name, nameEl: e.nameEl, points: [...e.sessions.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([date, v]) => ({ date, value: v })) }));
 }
