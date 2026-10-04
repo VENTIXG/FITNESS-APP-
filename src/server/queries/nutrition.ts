@@ -41,14 +41,14 @@ export function toPickerFood(f: Food, favorite = false): PickerFood {
 export async function getDiary(userId: string, date: ISODate) {
   const [entries, targets] = await Promise.all([
     db
-      .select({ entry: foodEntries, servings: foods.servings })
+      .select({ entry: foodEntries, servings: foods.servings, baseUnit: foods.baseUnit })
       .from(foodEntries)
       .leftJoin(foods, eq(foods.id, foodEntries.foodId))
       .where(and(eq(foodEntries.userId, userId), eq(foodEntries.date, date)))
       .orderBy(asc(foodEntries.sortOrder), asc(foodEntries.loggedAt)),
     getTargets(userId),
   ]);
-  const list = entries.map((e) => ({ ...e.entry, servings: e.servings ?? [] }));
+  const list = entries.map((e) => ({ ...e.entry, servings: e.servings ?? [], baseUnit: e.baseUnit }));
   return { entries: list, totals: sumNutrients(list), target: targetForDate(targets, date) };
 }
 
@@ -127,3 +127,67 @@ export async function getPickerData(userId: string) {
 }
 
 export type PickerData = Awaited<ReturnType<typeof getPickerData>>;
+
+export async function countEntries(userId: string, date: ISODate) {
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)`.mapWith(Number) })
+    .from(foodEntries)
+    .where(and(eq(foodEntries.userId, userId), eq(foodEntries.date, date)));
+  return n;
+}
+
+/** Daily totals for a date range (only days with entries) plus the target in force each day. */
+export async function getNutritionHistory(userId: string, start: ISODate, end: ISODate) {
+  const [rows, targets] = await Promise.all([
+    db
+      .select({
+        date: foodEntries.date,
+        calories: sql<number>`sum(${foodEntries.calories})`.mapWith(Number),
+        proteinG: sql<number>`sum(${foodEntries.proteinG})`.mapWith(Number),
+        carbsG: sql<number>`sum(${foodEntries.carbsG})`.mapWith(Number),
+        fatG: sql<number>`sum(${foodEntries.fatG})`.mapWith(Number),
+        fiberG: sql<number>`sum(${foodEntries.fiberG})`.mapWith(Number),
+        entries: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(foodEntries)
+      .where(and(eq(foodEntries.userId, userId), sql`${foodEntries.date} between ${start} and ${end}`))
+      .groupBy(foodEntries.date)
+      .orderBy(asc(foodEntries.date)),
+    getTargets(userId),
+  ]);
+  return rows.map((r) => ({ ...r, target: targetForDate(targets, r.date) }));
+}
+
+export async function getFoodDetail(userId: string, id: string) {
+  const f = (await db.select().from(foods).where(and(eq(foods.id, id), or(isNull(foods.userId), eq(foods.userId, userId)))).limit(1))[0];
+  if (!f) return null;
+  const [fav, usage] = await Promise.all([
+    db.select({ id: favoriteFoods.foodId }).from(favoriteFoods).where(and(eq(favoriteFoods.userId, userId), eq(favoriteFoods.foodId, id))),
+    db
+      .select({ uses: sql<number>`count(*)`.mapWith(Number), last: sql<string | null>`max(${foodEntries.date})` })
+      .from(foodEntries)
+      .where(and(eq(foodEntries.userId, userId), eq(foodEntries.foodId, id))),
+  ]);
+  return { food: f, favorite: fav.length > 0, uses: usage[0]?.uses ?? 0, lastUsed: usage[0]?.last ?? null };
+}
+
+export async function getSavedMeal(userId: string, id: string) {
+  const meal = (await db.select().from(savedMeals).where(and(eq(savedMeals.id, id), eq(savedMeals.userId, userId))).limit(1))[0];
+  if (!meal) return null;
+  const items = await db.select().from(savedMealItems).where(eq(savedMealItems.savedMealId, id)).orderBy(asc(savedMealItems.sortOrder));
+  return { meal, items };
+}
+
+export async function getRecipe(userId: string, id: string) {
+  const recipe = (await db.select().from(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, userId))).limit(1))[0];
+  if (!recipe) return null;
+  const items = await db.select().from(recipeIngredients).where(eq(recipeIngredients.recipeId, id)).orderBy(asc(recipeIngredients.sortOrder));
+  return { recipe, items };
+}
+
+/** Picker-shaped foods by id, including archived ones still referenced by meals/recipes. */
+export async function getPickerFoodsByIds(userId: string, ids: string[]) {
+  if (!ids.length) return [];
+  const rows = await db.select().from(foods).where(and(inArray(foods.id, ids), or(isNull(foods.userId), eq(foods.userId, userId))));
+  return rows.map((f) => toPickerFood(f));
+}

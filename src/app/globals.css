@@ -315,3 +315,9 @@
     border-color: #ddd !important;
   }
 }
+
+/* Custom clear buttons are rendered for search fields. */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  appearance: none;
+}
