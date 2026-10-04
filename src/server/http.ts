@@ -23,3 +23,11 @@ export function forbidden() {
 export function unauthorized() {
   return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 }
+
+/** Signed-in user context for route handlers (null when signed out). */
+export async function routeContext() {
+  const { getSessionUser } = await import("@/server/auth/session");
+  const { getContextForUser } = await import("@/server/context");
+  const user = await getSessionUser();
+  return user ? getContextForUser(user.id) : null;
+}

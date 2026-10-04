@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { LOCALE_COOKIE } from "@/lib/config";
@@ -131,3 +131,8 @@ export const saveNutritionTarget = createAction(
     return null;
   },
 );
+
+export const deleteNutritionTarget = createAction(z.object({ id: z.uuid() }), async (input, ctx) => {
+  await db.delete(nutritionTargets).where(and(eq(nutritionTargets.id, input.id), eq(nutritionTargets.userId, ctx.userId)));
+  return null;
+});

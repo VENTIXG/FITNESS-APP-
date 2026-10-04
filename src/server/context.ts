@@ -23,7 +23,7 @@ import {
 } from "@/lib/preferences";
 import { getSessionUser, requireOnboardedUser, requireUser } from "@/server/auth";
 import { db } from "@/server/db";
-import { userPreferences, type Profile } from "@/server/db/schema";
+import { profiles, userPreferences, users, type Profile } from "@/server/db/schema";
 
 export type Prefs = {
   goals: GoalsPrefs;
@@ -100,4 +100,21 @@ export const getLocale = cache(async (): Promise<Locale> => {
 
 export async function getT() {
   return getDictionary(await getLocale());
+}
+
+/**
+ * Context for background jobs and token-authenticated APIs (no session).
+ * Only use after the caller has been authorised for `userId`.
+ */
+export async function getContextForUser(userId: string): Promise<UserContext | null> {
+  const row = (
+    await db
+      .select({ id: users.id, email: users.email, isDemoAccount: users.isDemoAccount, profile: profiles })
+      .from(users)
+      .innerJoin(profiles, eq(profiles.userId, users.id))
+      .where(eq(users.id, userId))
+      .limit(1)
+  )[0];
+  if (!row) return null;
+  return buildContext({ id: row.id, email: row.email, isDemoAccount: row.isDemoAccount, profile: row.profile } as Awaited<ReturnType<typeof requireUser>>);
 }

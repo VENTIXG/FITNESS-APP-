@@ -164,6 +164,15 @@ export const settingsMessages = defineMessages({
       testSent: "Test notification sent",
       reminderTime: "Time",
       cronHint: "Scheduled reminders need the cron endpoint to run (see README → Notifications).",
+      reminderBody: {
+        weight: "A quick weigh-in keeps your trend accurate.",
+        workout: "Today's workout is still open.",
+        supplements: "Some supplements aren't checked off yet.",
+        water: "You're below your water goal so far.",
+        steps: "{remaining} steps to reach today's goal.",
+        nutrition: "Nothing logged today yet — a quick entry keeps your averages honest.",
+        sleep: "Time to start winding down for your sleep goal.",
+      },
     },
   },
   el: {
@@ -328,7 +337,16 @@ export const settingsMessages = defineMessages({
       test: "Αποστολή δοκιμαστικής ειδοποίησης",
       testSent: "Η δοκιμαστική ειδοποίηση στάλθηκε",
       reminderTime: "Ώρα",
-      cronHint: "Οι προγραμματισμένες υπενθυμίσεις απαιτούν να εκτελείται το cron endpoint (βλ. README → Notifications).",
+      cronHint: "Οι προγραμματισμένες υπενθυμίσεις χρειάζονται το endpoint cron (βλ. README → Notifications).",
+      reminderBody: {
+        weight: "Ένα γρήγορο ζύγισμα κρατά την τάση σας ακριβή.",
+        workout: "Η σημερινή προπόνηση είναι ακόμη ανοιχτή.",
+        supplements: "Κάποια συμπληρώματα δεν έχουν σημειωθεί ακόμη.",
+        water: "Είστε κάτω από τον στόχο νερού μέχρι στιγμής.",
+        steps: "{remaining} βήματα για τον σημερινό στόχο.",
+        nutrition: "Δεν έχει καταγραφεί τίποτα σήμερα — μια γρήγορη καταχώριση κρατά ακριβείς τους μέσους όρους.",
+        sleep: "Ώρα να χαλαρώσετε για τον στόχο ύπνου σας.",
+      },
     },
   },
 });
