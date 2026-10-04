@@ -48,8 +48,8 @@ export function FoodPicker({
   amountExtra?: React.ReactNode;
   keepOpenAfterSubmit?: boolean;
   autoFocus?: boolean;
-  /** Extra controls next to the search field (e.g. barcode scanner). */
-  headerExtra?: React.ReactNode;
+  /** Extra controls next to the search field; a function receives `openFood(id)`. */
+  headerExtra?: React.ReactNode | ((openFood: (id: string) => void) => React.ReactNode);
 }) {
   const t = useT();
   const tn = t.nutrition;
@@ -239,7 +239,7 @@ export function FoodPicker({
               </button>
             )}
           </label>
-          {headerExtra}
+          {typeof headerExtra === "function" ? headerExtra(setPendingFoodId) : headerExtra}
         </div>
         {!query && tabs.length > 1 && (
           <div role="tablist" aria-label={tn.addFood} className="no-scrollbar -mx-5 flex gap-1.5 overflow-x-auto px-5">

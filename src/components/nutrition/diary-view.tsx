@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { addFoodEntry, clearMeal, copyEntries, logSavedMeal } from "@/server/actions/nutrition";
 import type { DiaryEntry, PickerData } from "@/server/queries/nutrition";
 import { EntryEditorSheet, QuickAddSheet, SaveMealSheet, SlotSelect } from "./entry-sheets";
+import { BarcodeScanButton } from "./barcode-scanner";
 import { FoodPicker } from "./food-picker";
 import { MACRO_COLORS, MacroLine, useSlotName } from "./shared";
 
@@ -167,6 +168,7 @@ export function DiaryView({
               data={picker}
               submitLabel={t.common.add}
               keepOpenAfterSubmit
+              headerExtra={(openFood) => <BarcodeScanButton onFood={openFood} />}
               amountExtra={<SlotSelect id="add-slot" value={addSlot} onChange={setAddSlot} label={tn.meal} />}
               onSubmit={async (sel) => {
                 const res = await run(() => addFoodEntry({ date, mealSlot: addSlot, foodId: sel.foodId ?? null, recipeId: sel.recipeId ?? null, quantity: sel.quantity, unit: sel.unit }), {

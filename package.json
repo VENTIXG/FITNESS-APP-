@@ -15,7 +15,7 @@
     "db:migrate": "tsx --conditions=react-server scripts/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --conditions=react-server scripts/seed.ts",
-    "db:reset-password": "tsx scripts/reset-password.ts",
+    "db:reset-password": "tsx --conditions=react-server scripts/reset-password.ts",
     "vapid:generate": "web-push generate-vapid-keys",
     "check": "pnpm typecheck && pnpm lint && pnpm test"
   },
