@@ -8,6 +8,7 @@ import type { UserContext } from "@/server/context";
 import { db } from "@/server/db";
 import {
   cardioSessions,
+  dailyNotes,
   foodEntries,
   sleepEntries,
   stepEntries,
@@ -176,4 +177,14 @@ export async function getFirstDataDate(userId: string): Promise<ISODate | null> 
       (select min(date) from ${cardioSessions} where user_id = ${userId})
     )::text as d`);
   return rows[0]?.d ?? null;
+}
+
+/** Sleep entry, note and weight entry for one date. */
+export async function getDayExtras(userId: string, date: ISODate) {
+  const [sleep, note, weight] = await Promise.all([
+    db.select().from(sleepEntries).where(and(eq(sleepEntries.userId, userId), eq(sleepEntries.date, date))).orderBy(sql`case when ${sleepEntries.source} = 'manual' then 0 else 1 end`).limit(1),
+    db.select().from(dailyNotes).where(and(eq(dailyNotes.userId, userId), eq(dailyNotes.date, date))).limit(1),
+    db.select().from(weightEntries).where(and(eq(weightEntries.userId, userId), eq(weightEntries.date, date))).limit(1),
+  ]);
+  return { sleep: sleep[0] ?? null, note: note[0] ?? null, weight: weight[0] ?? null };
 }
