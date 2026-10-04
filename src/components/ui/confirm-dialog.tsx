@@ -38,9 +38,11 @@ export function ConfirmDialog({
   const t = useT();
   const [busy, setBusy] = React.useState(false);
   const [typed, setTyped] = React.useState("");
-  React.useEffect(() => {
+  const [wasOpen, setWasOpen] = React.useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (!open) setTyped("");
-  }, [open]);
+  }
   const blocked = confirmWord ? typed.trim() !== confirmWord : false;
 
   return (

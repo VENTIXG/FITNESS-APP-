@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useSyncExternalStore } from "react";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { useLocale, useT } from "@/components/providers/i18n-provider";
+import { noopSubscribe } from "@/lib/utils";
 import { signIn, signUp, type AuthFormState } from "@/server/actions/auth";
 
 function authErrorMessage(t: ReturnType<typeof useT>, code: NonNullable<AuthFormState>["error"]) {
@@ -59,10 +60,11 @@ export function SignupForm() {
   const t = useT();
   const locale = useLocale();
   const [state, action, pending] = useActionState<AuthFormState, FormData>(signUp, null);
-  const [timezone, setTimezone] = useState("UTC");
-  useEffect(() => {
-    setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
-  }, []);
+  const timezone = useSyncExternalStore(
+    noopSubscribe,
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    () => "UTC",
+  );
   return (
     <div className="rounded-3xl border border-border bg-surface p-6 shadow-pop sm:p-7">
       <h1 className="text-[22px] font-semibold tracking-tight">{t.auth.signUpTitle}</h1>

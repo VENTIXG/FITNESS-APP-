@@ -17,7 +17,8 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const locale = useLocale();
   const router = useRouter();
   const [query, setQuery] = React.useState("");
-  const [results, setResults] = React.useState<SearchResults>(EMPTY);
+  const [rawResults, setResults] = React.useState<SearchResults>(EMPTY);
+  const results = query.trim().length < 2 ? EMPTY : rawResults;
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -31,19 +32,18 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
-  React.useEffect(() => {
+  const [wasOpen, setWasOpen] = React.useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (!open) {
       setQuery("");
       setResults(EMPTY);
     }
-  }, [open]);
+  }
 
   React.useEffect(() => {
     const q = query.trim();
-    if (q.length < 2) {
-      setResults(EMPTY);
-      return;
-    }
+    if (q.length < 2) return;
     const ctrl = new AbortController();
     const id = window.setTimeout(async () => {
       setLoading(true);

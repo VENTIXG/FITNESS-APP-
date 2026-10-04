@@ -62,6 +62,9 @@ export function matchesSearch(haystack: string, query: string) {
   return q.split(/\s+/).every((token) => h.includes(token));
 }
 
+/** Subscribe function for useSyncExternalStore values that never change after mount. */
+export const noopSubscribe = () => () => {};
+
 export function uniqueBy<T>(items: readonly T[], key: (item: T) => string) {
   const seen = new Set<string>();
   const out: T[] = [];

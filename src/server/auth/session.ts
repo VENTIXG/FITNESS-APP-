@@ -15,7 +15,7 @@ export function sessionMaxAgeDays() {
 }
 
 /** Cookies are `Secure` unless the deployment is explicitly served over plain HTTP (e.g. a LAN box). */
-export function useSecureCookies() {
+export function shouldUseSecureCookies() {
   const appUrl = process.env.APP_URL;
   if (appUrl) return appUrl.startsWith("https://");
   return process.env.NODE_ENV === "production";
@@ -24,7 +24,7 @@ export function useSecureCookies() {
 export function sessionCookieOptions(expires: Date) {
   return {
     httpOnly: true,
-    secure: useSecureCookies(),
+    secure: shouldUseSecureCookies(),
     sameSite: "lax" as const,
     path: "/",
     expires,

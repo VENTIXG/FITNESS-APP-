@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, noopSubscribe } from "@/lib/utils";
 
 /** Resolves CSS custom properties to concrete colours (re-read when the theme changes). */
 export function useCssColors<K extends string>(vars: Record<K, string>): Record<K, string> {
@@ -21,7 +21,8 @@ export function useCssColors<K extends string>(vars: Record<K, string>): Record<
       const v = parsed[k];
       out[k] = v.startsWith("--") ? style.getPropertyValue(v).trim() || "#888" : v;
     }
-    setColors(out);
+    // Colours live in CSS custom properties, so they can only be read after mount.
+    setColors(out); // eslint-disable-line react-hooks/set-state-in-effect
   }, [key, resolvedTheme]);
   return colors;
 }
@@ -36,9 +37,11 @@ export const CHROME = {
 } as const;
 
 export function useMounted() {
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
-  return mounted;
+  return React.useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 }
 
 /** Fixed-height frame that includes the axis band (no nested scroll) and avoids SSR size warnings. */

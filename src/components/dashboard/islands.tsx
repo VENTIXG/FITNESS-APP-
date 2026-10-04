@@ -54,7 +54,11 @@ export function HabitCheck({
   const t = useT();
   const { run } = useRun();
   const [optimistic, setOptimistic] = React.useState(done);
-  React.useEffect(() => setOptimistic(done), [done]);
+  const [syncedDone, setSyncedDone] = React.useState(done);
+  if (done !== syncedDone) {
+    setSyncedDone(done);
+    setOptimistic(done);
+  }
   const checked = !!optimistic;
   const content = (
     <span

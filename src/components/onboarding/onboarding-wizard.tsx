@@ -71,14 +71,11 @@ export function OnboardingWizard({ initial }: { initial: Initial }) {
   const [trainingDays, setTrainingDays] = React.useState("4");
   const [targetWeight, setTargetWeight] = React.useState("");
   const [targetDate, setTargetDate] = React.useState("");
-  const [nutrition, setNutrition] = React.useState({ calories: "", proteinG: "", carbsG: "", fatG: "", fiberG: "" });
+  const [nutritionInput, setNutrition] = React.useState({ calories: "", proteinG: "", carbsG: "", fatG: "", fiberG: "" });
   const [nutritionTouched, setNutritionTouched] = React.useState(false);
   const [steps, setSteps] = React.useState("10000");
   const [water, setWater] = React.useState(initial.unitSystem === "imperial" ? "85" : "2500");
   const [waterTouched, setWaterTouched] = React.useState(false);
-  React.useEffect(() => {
-    if (!waterTouched) setWater(units === "imperial" ? "85" : "2500");
-  }, [units, waterTouched]);
   const [loadDemo, setLoadDemo] = React.useState(false);
 
   const weightKg = parseDecimal(weight) != null ? fromDisplayWeight(parseDecimal(weight)!, units) : null;
@@ -93,14 +90,12 @@ export function OnboardingWizard({ initial }: { initial: Initial }) {
   const age = birthDate ? ageOn(birthDate, initial.today) : null;
   const tdee = formulaTdee({ weightKg, heightCm: height, age, sex: sex === "skip" ? null : sex, activityLevel: activity, bodyFatPct: bf });
 
-  // Suggested targets (only until the user edits them).
-  React.useEffect(() => {
-    if (nutritionTouched) return;
-    if (!tdee || !weightKg) return;
-    const calories = suggestCalorieTarget(tdee.tdee, goal);
-    const m = suggestMacroTargets(calories, weightKg, goal);
-    setNutrition({ calories: String(m.calories), proteinG: String(m.proteinG), carbsG: String(m.carbsG), fatG: String(m.fatG), fiberG: String(m.fiberG) });
-  }, [tdee?.tdee, weightKg, goal, nutritionTouched]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Suggested targets are shown until the user edits any of them.
+  const suggestedMacros = tdee && weightKg ? suggestMacroTargets(suggestCalorieTarget(tdee.tdee, goal), weightKg, goal) : null;
+  const suggested = suggestedMacros
+    ? { calories: String(suggestedMacros.calories), proteinG: String(suggestedMacros.proteinG), carbsG: String(suggestedMacros.carbsG), fatG: String(suggestedMacros.fatG), fiberG: String(suggestedMacros.fiberG) }
+    : null;
+  const nutrition = nutritionTouched || !suggested ? nutritionInput : suggested;
 
   const required = weightKg && targetKg && targetDate ? requiredWeeklyRate(weightKg, targetKg, initial.today, targetDate) : null;
   const safety = required != null && weightKg ? assessRate(required, weightKg) : null;
@@ -178,7 +173,10 @@ export function OnboardingWizard({ initial }: { initial: Initial }) {
             <Segmented<UnitSystem>
               block
               value={units}
-              onChange={setUnits}
+              onChange={(u) => {
+                setUnits(u);
+                if (!waterTouched) setWater(u === "imperial" ? "85" : "2500");
+              }}
               options={[
                 { value: "metric", label: t.enums.unitSystem.metric },
                 { value: "imperial", label: t.enums.unitSystem.imperial },
@@ -307,7 +305,7 @@ export function OnboardingWizard({ initial }: { initial: Initial }) {
                   value={nutrition[key]}
                   onValueChange={(v) => {
                     setNutritionTouched(true);
-                    setNutrition((n) => ({ ...n, [key]: v }));
+                    setNutrition({ ...nutrition, [key]: v });
                   }}
                   integer
                   suffix={unit}

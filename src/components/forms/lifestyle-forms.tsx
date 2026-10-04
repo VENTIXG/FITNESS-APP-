@@ -27,7 +27,11 @@ export function WaterQuickAdd({ totalMl, date, onAdded, compact }: { totalMl: nu
   const { run } = useRun();
   const [optimistic, setOptimistic] = React.useState(totalMl);
   const [custom, setCustom] = React.useState("");
-  React.useEffect(() => setOptimistic(totalMl), [totalMl]);
+  const [syncedTotal, setSyncedTotal] = React.useState(totalMl);
+  if (totalMl !== syncedTotal) {
+    setSyncedTotal(totalMl);
+    setOptimistic(totalMl);
+  }
 
   async function add(ml: number) {
     setOptimistic((v) => v + ml);
