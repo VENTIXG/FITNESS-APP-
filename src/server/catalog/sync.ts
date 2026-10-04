@@ -3,6 +3,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { BUILTIN_EXERCISES } from "@/data/exercises";
 import { BUILTIN_FOODS } from "@/data/foods";
 import * as schema from "@/server/db/schema";
+import { servingNoun } from "@/lib/food-units";
 import { builtinExerciseId, builtinFoodId } from "./stable-id";
 
 type AnyDb = PostgresJsDatabase<typeof schema>;
@@ -71,7 +72,7 @@ export async function syncBuiltinCatalog(db: AnyDb) {
     fatG: f.f,
     fiberG: f.fiber ?? 0,
     sugarG: f.sugar ?? null,
-    servings: (f.servings ?? []).map((s) => ({ id: s.id, label: s.label, labelEl: s.labelEl, amount: s.amount })),
+    servings: (f.servings ?? []).map((s) => ({ id: s.id, label: servingNoun(s.label), labelEl: servingNoun(s.labelEl), amount: s.amount })),
     defaultServingId: f.defaultServing ?? null,
     source: "builtin" as const,
     archivedAt: null,

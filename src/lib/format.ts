@@ -121,42 +121,65 @@ export function fmtPace(secondsPerUnit: number | null, system: UnitSystem) {
   return `${fmtClock(secondsPerUnit)} /${distanceUnit(system)}`;
 }
 
-const dfCache = new Map<string, Intl.DateTimeFormat>();
-function df(locale: Locale, opts: Intl.DateTimeFormatOptions) {
-  const key = `${locale}|${JSON.stringify(opts)}`;
-  let f = dfCache.get(key);
-  if (!f) {
-    f = new Intl.DateTimeFormat(intlLocale(locale), { timeZone: "UTC", ...opts });
-    dfCache.set(key, f);
-  }
-  return f;
-}
-
 export type DateStyle = "short" | "medium" | "long" | "weekday" | "weekdayShort" | "monthYear" | "dayMonth" | "monthShort";
 
-const DATE_STYLES: Record<DateStyle, Intl.DateTimeFormatOptions> = {
-  short: { day: "numeric", month: "numeric" },
-  medium: { day: "numeric", month: "short", year: "numeric" },
-  long: { weekday: "long", day: "numeric", month: "long", year: "numeric" },
-  weekday: { weekday: "long", day: "numeric", month: "long" },
-  weekdayShort: { weekday: "short", day: "numeric", month: "short" },
-  monthYear: { month: "long", year: "numeric" },
-  dayMonth: { day: "numeric", month: "short" },
-  monthShort: { month: "short" },
-};
+/*
+ * Calendar names are table-driven (not Intl) so server and browser render the exact
+ * same text — ICU versions differ in punctuation, which breaks hydration.
+ */
+const NAMES = {
+  en: {
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    monthsGen: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    daysShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    daysNarrow: ["S", "M", "T", "W", "T", "F", "S"],
+  },
+  el: {
+    months: ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"],
+    monthsGen: ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"],
+    monthsShort: ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μαΐ", "Ιουν", "Ιουλ", "Αυγ", "Σεπ", "Οκτ", "Νοε", "Δεκ"],
+    days: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"],
+    daysShort: ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ"],
+    daysNarrow: ["Κ", "Δ", "Τ", "Τ", "Π", "Π", "Σ"],
+  },
+} as const;
 
 /** Formats an ISO calendar date (no timezone shift — the date is already local). */
 export function fmtDate(locale: Locale, date: ISODate, style: DateStyle = "medium") {
-  return df(locale, DATE_STYLES[style]).format(new Date(toUTC(date)));
+  const n = NAMES[locale] ?? NAMES.en;
+  const d = new Date(toUTC(date));
+  const day = d.getUTCDate();
+  const m = d.getUTCMonth();
+  const y = d.getUTCFullYear();
+  const wd = d.getUTCDay();
+  switch (style) {
+    case "short":
+      return `${day}/${m + 1}`;
+    case "medium":
+      return `${day} ${n.monthsShort[m]} ${y}`;
+    case "long":
+      return locale === "el" ? `${n.days[wd]} ${day} ${n.monthsGen[m]} ${y}` : `${n.days[wd]}, ${day} ${n.months[m]} ${y}`;
+    case "weekday":
+      return `${n.days[wd]} ${day} ${n.monthsGen[m]}`;
+    case "weekdayShort":
+      return `${n.daysShort[wd]} ${day} ${n.monthsShort[m]}`;
+    case "monthYear":
+      return `${n.months[m]} ${y}`;
+    case "dayMonth":
+      return `${day} ${n.monthsShort[m]}`;
+    case "monthShort":
+      return n.monthsShort[m];
+  }
 }
 
 export function fmtWeekdayNarrow(locale: Locale, weekdayIndex: number) {
-  // 2023-01-01 was a Sunday.
-  return df(locale, { weekday: "narrow" }).format(new Date(Date.UTC(2023, 0, 1 + weekdayIndex)));
+  return (NAMES[locale] ?? NAMES.en).daysNarrow[weekdayIndex];
 }
 
 export function fmtWeekdayShort(locale: Locale, weekdayIndex: number) {
-  return df(locale, { weekday: "short" }).format(new Date(Date.UTC(2023, 0, 1 + weekdayIndex)));
+  return (NAMES[locale] ?? NAMES.en).daysShort[weekdayIndex];
 }
 
 /** Formats an instant in the user's timezone, e.g. "18:42". */

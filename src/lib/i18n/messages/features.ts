@@ -82,6 +82,8 @@ export const features = defineMessages({
       editEntry: "Edit entry",
       addEntry: "Add entry",
       bmi: "BMI",
+      bmiCategory: { underweight: "Underweight", normal: "Normal range", overweight: "Overweight", obese: "Obese" },
+      bmiCaveat: "BMI ignores muscle mass — use it as a rough reference only.",
     },
     body: {
       title: "Body",
@@ -615,6 +617,8 @@ export const features = defineMessages({
       editEntry: "Επεξεργασία καταχώρισης",
       addEntry: "Νέα καταχώριση",
       bmi: "ΔΜΣ",
+      bmiCategory: { underweight: "Λιποβαρής", normal: "Φυσιολογικό εύρος", overweight: "Υπέρβαρος", obese: "Παχύσαρκος" },
+      bmiCaveat: "Ο ΔΜΣ δεν λαμβάνει υπόψη τη μυϊκή μάζα — χρησιμοποιήστε τον μόνο ως χονδρική αναφορά.",
     },
     body: {
       title: "Σώμα",
