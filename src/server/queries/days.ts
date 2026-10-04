@@ -188,3 +188,15 @@ export async function getDayExtras(userId: string, date: ISODate) {
   ]);
   return { sleep: sleep[0] ?? null, note: note[0] ?? null, weight: weight[0] ?? null };
 }
+
+export async function getWaterEntries(userId: string, date: ISODate) {
+  return db.select().from(waterEntries).where(and(eq(waterEntries.userId, userId), eq(waterEntries.date, date))).orderBy(sql`${waterEntries.loggedAt} desc`);
+}
+
+export async function getSleepEntries(userId: string, start: ISODate, end: ISODate) {
+  return db
+    .select()
+    .from(sleepEntries)
+    .where(and(eq(sleepEntries.userId, userId), gte(sleepEntries.date, start), lte(sleepEntries.date, end)))
+    .orderBy(sql`${sleepEntries.date} desc`);
+}
